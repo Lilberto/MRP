@@ -1,0 +1,15 @@
+C:\Users\Roberto\Downloads\MRP\MRP\bin\Debug\net9.0\MRP.exe
+C:\Users\Roberto\Downloads\MRP\MRP\bin\Debug\net9.0\MRP.deps.json
+C:\Users\Roberto\Downloads\MRP\MRP\bin\Debug\net9.0\MRP.runtimeconfig.json
+C:\Users\Roberto\Downloads\MRP\MRP\bin\Debug\net9.0\MRP.dll
+C:\Users\Roberto\Downloads\MRP\MRP\bin\Debug\net9.0\MRP.pdb
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.AssemblyInfoInputs.cache
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.AssemblyInfo.cs
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.csproj.CoreCompileInputs.cache
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.sourcelink.json
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.dll
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\refint\MRP.dll
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.pdb
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\MRP.genruntimeconfig.cache
+C:\Users\Roberto\Downloads\MRP\MRP\obj\Debug\net9.0\ref\MRP.dll
