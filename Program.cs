@@ -1,7 +1,14 @@
 ﻿using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
+
+using LeaderboardLogic;
+using LoginLogic;
+using RegisterLogic;
+using Profile_Site;
 
 class Program
 {
@@ -15,112 +22,70 @@ class Program
         while (true)
         {
             var context = await listener.GetContextAsync();
-            _ = Task.Run(() => HandleRequest(context));
+            //_ = HandleRequest.HandleRequestFunc(context);
+
+            Console.WriteLine($"[DEBUG] {context.Request.HttpMethod} {context.Request.Url.AbsolutePath}");
+
+            _ = Task.Run(() => Router.Handle(context));
+
         }
     }
+}
 
-    static async void HandleRequest(HttpListenerContext context)
+
+public static class Router
+{
+    private static readonly List<Route> _routes = new()
     {
-        var request = context.Request;
-        var response = context.Response;
-
-        try
-        {
-            string token = request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
-
-            // ----- LOGIN Site  -----
-            if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/api/users/login")
-            {
-                using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
-                string body = await reader.ReadToEndAsync();
-                var loginData = JsonSerializer.Deserialize<LoginRequest>(body);
-
-                if (loginData == null || string.IsNullOrEmpty(loginData.Username) || string.IsNullOrEmpty(loginData.Password))
-                {
-                    response.StatusCode = 400;
-                }
-                else
-                {
-                    var user = UserRepository.Validate(loginData.Username, loginData.Password);
-                    if (user == null)
-                        response.StatusCode = 401;
-                    else
-                    {
-                        string tokenGenerated = Guid.NewGuid().ToString();
-                        var result = new { message = "Login successful", token = $"{loginData.Username}-mrpToken" };
-                        string json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-                        byte[] buffer = Encoding.UTF8.GetBytes(json);
-                        response.ContentType = "application/json";
-                        response.ContentLength64 = buffer.Length;
-                        response.StatusCode = 200;
-                        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-                    }
-                }
-                return;
-            }
-
-            // ----- GET / (Main-Site) -----
-            if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/")
-            {
-                if (string.IsNullOrEmpty(token))
-                {
-                    // No Token → 401 Unauthorized
-                    response.StatusCode = 401;
-                    await response.OutputStream.WriteAsync(Encoding.UTF8.GetBytes("Unauthorized"));
-                }
-                else
-                {
-                    var mainInfo = new { name = "MRP API", version = "0.1" };
-                    string json = JsonSerializer.Serialize(mainInfo, new JsonSerializerOptions { WriteIndented = true });
-                    byte[] buffer = Encoding.UTF8.GetBytes(json);
-                    response.ContentType = "application/json";
-                    response.ContentLength64 = buffer.Length;
-                    response.StatusCode = 200;
-                    await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-                }
-                return;
-            }
-
-            // ----- All other URLs -----
-            response.StatusCode = 404;
-        }
-        catch (Exception ex)
-        {
-            response.StatusCode = 500;
-            byte[] buffer = Encoding.UTF8.GetBytes($"Server error: {ex.Message}");
-            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-        }
-        finally
-        {
-            response.OutputStream.Close();
-        }
-    }
-
-}
-
-
-public class LoginRequest
-{
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
-}
-
-public class User
-{
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
-}
-
-public static class UserRepository
-{
-    private static List<User> _users = new List<User>
-    {
-        new User { Username = "alice", Password = "1234" },
-        new User { Username = "bob", Password = "secret" }
+        new Route("POST", @"^/api/users/login$", (ctx, p) => LoginStructure.LoginSite(ctx, p)),
+        new Route("POST", @"^/api/users/register$", (ctx, p) => RegisterStructure.RegisterSite(ctx, p)),
+        new Route("GET",  @"^/api/users/leaderboard$", (ctx, p) => LeaderboardStructure.LeaderboardSite(ctx, p)),
+        new Route("GET",  @"^/api/(?<username>[A-Za-z0-9_]+)/profile$", (ctx, p) => Profile_Structure.ProfileSite(ctx, p))
+      
     };
 
-    public static User? Validate(string username, string password)
+    public static async Task Handle(HttpListenerContext context)
     {
-        return _users.FirstOrDefault(u => u.Username == username && u.Password == password);
+        string path = context.Request.Url.AbsolutePath;
+        string method = context.Request.HttpMethod;
+
+        foreach (var route in _routes)
+        {
+            if (route.Method == method && Regex.IsMatch(path, route.Pattern))
+            {
+                var match = Regex.Match(path, route.Pattern);
+                var parameters = new Dictionary<string, string>();
+
+                foreach (var groupName in route.Regex.GetGroupNames())
+                {
+                    if (match.Groups[groupName].Success && groupName != "0")
+                        parameters[groupName] = match.Groups[groupName].Value;
+                }
+
+                await route.Handler(context, parameters);
+                return;
+            }
+        }
+
+        context.Response.StatusCode = 404;
+        byte[] buffer = Encoding.UTF8.GetBytes("Not Found");
+        await context.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        context.Response.Close();
+    }
+
+    private class Route
+    {
+        public string Method { get; }
+        public string Pattern { get; }
+        public Regex Regex { get; }
+        public Func<HttpListenerContext, Dictionary<string, string>, Task> Handler { get; }
+
+        public Route(string method, string pattern, Func<HttpListenerContext, Dictionary<string, string>, Task> handler)
+        {
+            Method = method;
+            Pattern = pattern;
+            Regex = new Regex(pattern, RegexOptions.Compiled);
+            Handler = handler;
+        }
     }
 }
