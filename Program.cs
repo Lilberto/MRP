@@ -1,14 +1,21 @@
 ﻿using System.Net;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 
+using Register_Endpoint;
+using Login_Endpoint;
+using Profile_Endpoint;
+using Leaderboard_Endpoint;
+using MediaEndpoint;
+using AllMediaEndpoint;
 
-using LeaderboardLogic;
-using LoginLogic;
-using RegisterLogic;
-using Profile_Site;
+using Error_404;
+using Error_400;
+
+//! Register DB logic
+//! Login DB logic
+//! Profile DB logic
+//! Leaderboard DB logic
+
 
 class Program
 {
@@ -22,9 +29,13 @@ class Program
         while (true)
         {
             var context = await listener.GetContextAsync();
-            //_ = HandleRequest.HandleRequestFunc(context);
 
-            Console.WriteLine($"[DEBUG] {context.Request.HttpMethod} {context.Request.Url.AbsolutePath}");
+            if (context.Request?.Url == null)
+            {
+                await Error400.E_400(context);
+            } else {
+                Console.WriteLine($"[DEBUG] {context.Request.HttpMethod} {context.Request.Url.AbsolutePath}");
+            }
 
             _ = Task.Run(() => Router.Handle(context));
 
@@ -37,15 +48,24 @@ public static class Router
 {
     private static readonly List<Route> _routes = new()
     {
-        new Route("POST", @"^/api/users/login$", (ctx, p) => LoginStructure.LoginSite(ctx, p)),
-        new Route("POST", @"^/api/users/register$", (ctx, p) => RegisterStructure.RegisterSite(ctx, p)),
-        new Route("GET",  @"^/api/users/leaderboard$", (ctx, p) => LeaderboardStructure.LeaderboardSite(ctx, p)),
-        new Route("GET",  @"^/api/(?<username>[A-Za-z0-9_]+)/profile$", (ctx, p) => Profile_Structure.ProfileSite(ctx, p))
-      
+        new Route("POST", @"^/api/users/register$", (ctx, p) => RegisterEndpoint.RegisterSite(ctx, p)),
+        new Route("POST", @"^/api/users/login$", (ctx, p) => LoginEndpoint.LoginSite(ctx, p)),
+        new Route("GET",  @"^/api/(?<username>[A-Za-z0-9_]+)/profile$", (ctx, p) => ProfileEndpoint.ProfileSite(ctx, p)),
+        new Route("GET",  @"^/api/users/leaderboard$", (ctx, p) => LeaderboardEndpoint.LeaderboardSite(ctx, p)),
+
+        new Route("POST", @"^/api/media$", (ctx, p) => Media_Endpoint.MediaSite(ctx, p)), //new media post 
+        new Route("GET", @"^/api/media$", (ctx, p) => All_Media_Endpoint.AllMediaSite(ctx, p)), //all media posts 
+
     };
 
     public static async Task Handle(HttpListenerContext context)
     {
+        if (context.Request?.Url == null)
+        {
+            await Error400.E_400(context);
+            return;
+        }
+
         string path = context.Request.Url.AbsolutePath;
         string method = context.Request.HttpMethod;
 
@@ -67,10 +87,12 @@ public static class Router
             }
         }
 
-        context.Response.StatusCode = 404;
-        byte[] buffer = Encoding.UTF8.GetBytes("Not Found");
-        await context.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-        context.Response.Close();
+        // context.Response.StatusCode = 404;
+        // byte[] buffer = Encoding.UTF8.GetBytes("Not Found");
+        // await context.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        // context.Response.Close();
+
+        await Error404.E_404(context);
     }
 
     private class Route
