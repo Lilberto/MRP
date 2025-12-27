@@ -50,7 +50,7 @@ public static class LoginService
                 updateCmd.Parameters.AddWithValue("@username", username);
 
                 var insertToken = updateCmd.ExecuteNonQuery();
-                Console.WriteLine($"User '{username}' successfully registered token: {token}!");
+                Console.WriteLine($"User '{username}' successfuly registered token: {token}!");
 
                 return true;
 

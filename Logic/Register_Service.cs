@@ -44,7 +44,7 @@ public static class RegisterService
             insertCmd.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
 
             var newUserId = insertCmd.ExecuteScalar();
-            Console.WriteLine($"User '{username}' successfully registered (ID: {newUserId})!");
+            Console.WriteLine($"User '{username}' successfuly registered (ID: {newUserId})!");
 
             return true;
         }

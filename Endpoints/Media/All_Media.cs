@@ -7,7 +7,7 @@ using Code_200;
 using Error_401;
 using Error_500;
 
-using Media_extract;
+using All_Media_extract;
 
 namespace AllMediaEndpoint;
 
@@ -28,7 +28,7 @@ public class All_Media_Endpoint
 
             if (isValid)
             {
-                List<Media> AllMedia = Media_extract_service.Media_extract();
+                List<Media> AllMedia = All_Media_extract_service.All_Media_extract();
 
                 Console.WriteLine($"All Media {AllMedia}");
                 await Code200.C_200(response, AllMedia);
