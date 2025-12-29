@@ -8,10 +8,7 @@ public class Media
     public string type { get; set; } = "";
     public int year { get; set; }
     public List<string> genres { get; set; } = new();
-    public string agerating { get; set; } = "FSK0";
-    
-
-    // Nur Server (Client ignoriert wenn 0/leer)
+    public string agerating { get; set; } = "";
     public double score { get; set; }
     public string creator { get; set; } = "";
     public DateTime created { get; set; }
