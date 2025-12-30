@@ -28,7 +28,19 @@ public class All_Media_Endpoint
 
             if (isValid)
             {
-                List<Media> AllMedia = All_Media_extract_service.All_Media_extract();
+                var filter = new MediaSearchFilter {
+                    Title = request.QueryString["title"],
+                    Genre = request.QueryString["genre"],
+                    MediaType = request.QueryString["mediaType"],
+                    AgeRestriction = request.QueryString["ageRestriction"],
+                    SortBy = request.QueryString["sortBy"]
+                };
+
+                if (int.TryParse(request.QueryString["releaseYear"], out int year)) filter.ReleaseYear = year;
+                if (double.TryParse(request.QueryString["rating"], out double rate)) filter.MinRating = rate;
+
+
+                List<Media> AllMedia = All_Media_extract_service.All_Media_extract(filter);
 
                 Console.WriteLine($"All Media {AllMedia}");
                 await Code200.C_200(response, AllMedia);

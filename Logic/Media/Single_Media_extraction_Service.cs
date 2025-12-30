@@ -14,13 +14,22 @@ public class Single_Media_extract_service
         conn.Open();
 
         string MediaExtractSingleQuery = @"
-            SELECT m.id, m.user_id, m.title, m.description, m.media_type, 
-                m.release_year, m.age_restriction, m.avg_score,
-                ARRAY_AGG(g.genre) FILTER (WHERE g.genre IS NOT NULL) as genres
+            SELECT 
+                m.id, 
+                m.user_id, 
+                m.title, 
+                m.description, 
+                m.media_type, 
+                m.release_year, 
+                m.age_restriction, 
+                COALESCE(AVG(r.stars), 0.0) as avg_score,
+                ARRAY_AGG(DISTINCT g.genre) FILTER (WHERE g.genre IS NOT NULL) as genres
             FROM media_entries m
             LEFT JOIN media_genres g ON m.id = g.media_id
+            LEFT JOIN ratings r ON m.id = r.media_id
             WHERE m.id = @id
-            GROUP BY m.id;";
+            GROUP BY m.id, m.user_id, m.title, m.description, m.media_type, m.release_year, m.age_restriction;
+        ";
 
         using var extractCMD = new NpgsqlCommand(MediaExtractSingleQuery, conn);
         extractCMD.Parameters.AddWithValue("id", id);
