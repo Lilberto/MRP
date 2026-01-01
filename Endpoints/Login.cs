@@ -39,7 +39,7 @@ public static class LoginEndpoint
 
     private static async Task Response_Data(bool Value, HttpListenerResponse response, string Username)
     {
-        string token = $"{Username}-mrpToken";
+        string token = $"{Username}-mrptoken";
         var result = new { message = "Login successful", Token = token};
         Console.WriteLine($"Login Value: {Value}");
 

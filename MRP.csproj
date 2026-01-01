@@ -11,4 +11,9 @@
     <PackageReference Include="Npgsql" Version="10.0.1" />
   </ItemGroup>
 
+  <!-- Exclude test files placed under Tests/ so the main project doesn't try to compile them -->
+  <ItemGroup>
+    <Compile Remove="Tests\**\*.cs" />
+  </ItemGroup>
+
 </Project>

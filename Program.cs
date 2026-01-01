@@ -28,9 +28,14 @@ using FavListEP;
 // History
 using RatingHistoryEP;
 
-using Profile_Endpoint;
+// Recommendations
+using RecommendationsEP;
+
+// Profile and Leaderboard
+using ProfileEP;
 using Leaderboard_EP;
 
+// Error codes
 using Error_404;
 using Error_400;
 
@@ -108,6 +113,9 @@ public static class Router
     
         // History
         new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_]+)/rate/history$", (ctx, p) => Rating_History.Rating_History_Site(ctx, p)), //rating history
+        
+        // Recommendations
+        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_]+)/recommendations$", (ctx, p) => Recommendations_EP.Recommendations_Site(ctx, p)), //recommendations
     };
 
     public static async Task Handle(HttpListenerContext context)

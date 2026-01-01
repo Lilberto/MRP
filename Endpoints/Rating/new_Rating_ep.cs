@@ -32,8 +32,12 @@ public class Update_Rating
         Console.WriteLine($"Auth Validation: {isValid}");
 
         if (routeParams.TryGetValue("ratingId", out string? idStr) && int.TryParse(idStr, out int ratingId))
-        {
-            var RatingData = JsonSerializer.Deserialize<Rating>(await Body_Request.Body_Data(request));
+        {   
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };  
+            var RatingData = JsonSerializer.Deserialize<Rating>(await Body_Request.Body_Data(request), options);
 
             // Checks if rating is empty and the rating is 1 - 5
             if (RatingData == null || RatingData.Stars < 1 || RatingData.Stars > 5)

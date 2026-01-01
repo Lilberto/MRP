@@ -12,7 +12,7 @@ public static class User_ID
         using var conn = new NpgsqlConnection(ConnectionString);
         conn.Open();
 
-        string checkQuery = @"SELECT id FROM users WHERE token = @token AND token_created_at > NOW() - INTERVAL '168 hours'";
+        string checkQuery = @"SELECT id FROM users WHERE token = @token"; //  AND token_created_at > NOW() - INTERVAL '168 hours'
         using var checkCmd = new NpgsqlCommand(checkQuery, conn);
         checkCmd.Parameters.AddWithValue("@token", token);
 

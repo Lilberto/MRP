@@ -1,21 +1,22 @@
-using System.Net;
+namespace RecommendationsEP;
 
-using Profile_Service;
+using System.Net;
+using System.Text.Json;
+
+using Recommendations_Service;
 
 // utils
 using Token;
 using Auth_util;
+using Body_request;
 
 // codes
 using Code_200;
 using Error_500;
 
-
-namespace ProfileEP;
-
-public static class ProfileEndpoint
+public class Recommendations_EP
 {
-    public static async Task ProfileSite(HttpListenerContext context, Dictionary<string, string> routeParams)
+    public static async Task Recommendations_Site(HttpListenerContext context, Dictionary<string, string> routeParams)
     {
         var request = context.Request;
         var response = context.Response;
@@ -27,7 +28,6 @@ public static class ProfileEndpoint
 
         Console.WriteLine($"Auth Validation: {isValid}");
 
-
         if (routeParams.TryGetValue("username", out string? username) && !string.IsNullOrEmpty(username))
         {
             bool userTokenValid = Auth.Auth_User_Token(username, Token!);
@@ -38,22 +38,19 @@ public static class ProfileEndpoint
                 return;
             }
 
-            var (statusCode, profileData) = await ProfileService.Profile_User(userId);
-            
-            Console.WriteLine($"StatusCode: {statusCode}");
-            
-            switch (statusCode)
+            var (StatusCode, Message, Data) = await Recommendations_Service.Recommendations_Logic(userId);
+
+            switch (StatusCode)
             {
                 case 200:
-                    var result = new { profile = profileData };
+                    var result = new { Message, recommendations = Data };
                     await Code200.C_200(response, result);
                     break;
 
                 default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
+                    await Error500.E_500(response, new Exception("Error fetching recommendations"));
                     break;
             }
         }
-
     }
 }
