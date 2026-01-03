@@ -1,64 +1,66 @@
+namespace Register_Service;
+
 using Npgsql;
 
+// utils
 using Hash_util;
-
-namespace Register_Service;
+using DBConnection;
 
 public static class RegisterService
 {
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=mrp_db;Username=admin;Password=mrp123;";
-    public static bool RegisterUser(string username, string password)
+    public static async Task<(int StatusCode, string Message, List<UserRegisterDTO> Data)> RegisterUser(UserRegisterDTO User_data)
     {
         try
         {
-            using var conn = new NpgsqlConnection(ConnectionString);
-            conn.Open();
+            using var conn = DbFactory.GetConnection();
+            await conn.OpenAsync();
 
             string checkQuery = "SELECT COUNT(*) FROM users WHERE username = @username;";
             using var checkCmd = new NpgsqlCommand(checkQuery, conn);
-            checkCmd.Parameters.AddWithValue("@username", username);
+            checkCmd.Parameters.AddWithValue("@username", User_data.Username);
 
-            var count = Convert.ToInt64(checkCmd.ExecuteScalar());
+            var count = Convert.ToInt64(await checkCmd.ExecuteScalarAsync());
             if (count > 0)
             {
                 Console.WriteLine("User exists!");
-                return false;
+                return (409, "User already exists", new List<UserRegisterDTO>());
             }
 
-            // 2. Salt generieren und Password hashen (SICHERHEIT!)
+            //###################################//
+            // Salt generation and Password hash //
+            //###################################//
             string salt = Hash.GenerateSalt();
-            string passwordHash = Hash.HashPassword(password, salt);
+            string passwordHash = Hash.HashPassword(User_data.Password, salt);
 
-            // 3. Benutzer mit ALLEN benötigten Feldern einfügen
+            //################################//
+            // Insert user with ALL required  //
+            //################################//
             string insertQuery = @"
-                INSERT INTO users 
-                    (username, password_hash, salt, created_at) 
-                VALUES 
-                    (@username, @password_hash, @salt, @created_at)
-                RETURNING id;";
+                INSERT INTO users (username, password_hash, salt, created_at) 
+                VALUES (@username, @password_hash, @salt, @created_at)
+                RETURNING id, created_at;
+            ";
 
             using var insertCmd = new NpgsqlCommand(insertQuery, conn);
-            insertCmd.Parameters.AddWithValue("@username", username);
+            insertCmd.Parameters.AddWithValue("@username", User_data.Username);
             insertCmd.Parameters.AddWithValue("@password_hash", passwordHash);
             insertCmd.Parameters.AddWithValue("@salt", salt);
             insertCmd.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
 
-            var newUserId = insertCmd.ExecuteScalar();
-            Console.WriteLine($"User '{username}' successfuly registered (ID: {newUserId})!");
+            var newUserId = await insertCmd.ExecuteScalarAsync();
+            Console.WriteLine($"User '{User_data.Username}' successfuly registered (ID: {newUserId})!");
 
-            return true;
+            return (201, "User registered successfully", new List<UserRegisterDTO>{ User_data });
         }
         catch (NpgsqlException ex)
         {
-            Console.WriteLine("Database error during registration:");
-            Console.WriteLine($"PostgreSQL Error [{ex.SqlState}]: {ex.Message}");
-            return false;
+            return (503, $"Database error: {ex.Message}", new List<UserRegisterDTO>());
         }
         catch (Exception ex)
         {
-            Console.WriteLine("General error during registration:");
-            Console.WriteLine(ex.Message);
-            return false;
+            return (500, $"Internal error: {ex.Message}", new List<UserRegisterDTO>());
         }
+
     }
+
 }

@@ -46,7 +46,7 @@ public class Like_Rating_EP
                     break;
 
                 case 404:
-                    await Error404.E_404(context);
+                    await Error404.E_404(response);
                     break;
 
                 default:

@@ -44,15 +44,15 @@ public class Set_Favorite_Media
                     break;
 
                 case 400:
-                    await Error400.E_400(context);
+                    await Error400.E_400(response, new { message = "Invalid media ID!" });
                     break;
 
                 case 404:
-                    await Error404.E_404(context);
+                    await Error404.E_404(response);
                     break;
 
                 case 409:
-                    await Error409.E_409(context);
+                    await Error409.E_409(response, new { message = "Media is already in favorites!" });
                     break;
 
                 default:

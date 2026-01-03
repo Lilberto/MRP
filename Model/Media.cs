@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public class Media
 {
     public int id { get; set; }

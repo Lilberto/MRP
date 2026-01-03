@@ -1,17 +1,22 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace Error_409
 {
     public class Error409
     {
-        public static async Task E_409(HttpListenerContext context)
+        public static async Task E_409(HttpListenerResponse response, object result)
         {
-            context.Response.StatusCode = 409;
-            context.Response.ContentType = "text/plain";
-            byte[] buffer = Encoding.UTF8.GetBytes("Conflict: Resource already exists");
-            await context.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-            context.Response.Close();
+            string json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            byte[] buffer = Encoding.UTF8.GetBytes(json);
+
+            response.StatusCode = 409;
+            response.ContentType = "application/json";
+            response.ContentLength64 = buffer.Length;
+
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            response.OutputStream.Close();
         }
     }
 }

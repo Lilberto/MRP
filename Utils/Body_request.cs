@@ -1,8 +1,6 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
-
 namespace Body_request;
+
+using System.Net;
 
 public static class Body_Request
 {

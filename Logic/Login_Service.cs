@@ -1,75 +1,65 @@
-using Hash_util;
+namespace Login_Service;
+
 using Npgsql;
 
-namespace Login_Service;
+// utils
+using DBConnection;
+using Hash_util;
 
 public static class LoginService
 {
-    private const string ConnectionString = @"
-        Host=localhost;
-        Port=5432;
-        Database=mrp_db;
-        Username=admin;
-        Password=mrp123;"
-    ;
-
-    public static bool LoginUser(string username, string password)
+    public static async Task<(int StatusCode, string Message, object Data)> LoginUser(UserRegisterDTO loginData)
     {
         try
         {
-            using var conn = new NpgsqlConnection(ConnectionString);
-            conn.Open();
+            using var conn = DbFactory.GetConnection();
+            await conn.OpenAsync();
 
             string checkQuery = "SELECT salt, password_hash FROM users WHERE username = @username;";
             using var checkCmd = new NpgsqlCommand(checkQuery, conn);
-            checkCmd.Parameters.AddWithValue("@username", username);
-            checkCmd.Parameters.AddWithValue("@password", password);
-
-            using var reader = checkCmd.ExecuteReader();
+            checkCmd.Parameters.AddWithValue("@username", loginData.Username);
+            checkCmd.Parameters.AddWithValue("@password", loginData.Password);
             
-            if(!reader.Read())
+            using var reader = await checkCmd.ExecuteReaderAsync();
+            if(!await reader.ReadAsync())
             {
-                return false;
+                return (401, "Invalid username or password", new { });
             }
 
             string dbSalt = reader.GetString(0);
             string dbHash = reader.GetString(1);
             reader.Close();
 
-            string computedHash = Hash.HashPassword(password, dbSalt);
-
-            Console.WriteLine($"dbHash: {dbHash}, salt: {dbSalt}, computedHash: {computedHash}");
+            string computedHash = Hash.HashPassword(loginData.Password, dbSalt);
 
             if (computedHash == dbHash)
             {
-                string token = $"{username}-mrptoken"; 
+                string rawToken = $"{loginData.Username}-mrptoken-{Token.SecureRandom.GenerateTokenPart()}";
+                string token = Token.TokenHash.HashToken(rawToken);
 
                 string updateQuery = "UPDATE users SET token = @token, token_created_At = CURRENT_TIMESTAMP WHERE username = @username";
                 using var updateCmd = new NpgsqlCommand(updateQuery, conn);
                 updateCmd.Parameters.AddWithValue("@token", token);
-                updateCmd.Parameters.AddWithValue("@username", username);
+                updateCmd.Parameters.AddWithValue("@username", loginData.Username);
 
-                var insertToken = updateCmd.ExecuteNonQuery();
-                Console.WriteLine($"User '{username}' successfuly registered token: {token}!");
+                var insertToken = await updateCmd.ExecuteNonQueryAsync();
+                Console.WriteLine($"User '{loginData.Username}' successfuly registered token: {token}");
 
-                return true;
-
-            } else {
+                return (200, "Login successful", new { Token = rawToken });
+            }
+            else
+            {
                 Console.WriteLine("Wrong login");
-                return false;
-            } 
+                return (401, "Invalid username or password", new { });
+            }
         }
         catch (NpgsqlException ex)
         {
-            Console.WriteLine("Database error during registration:");
-            Console.WriteLine($"PostgreSQL Error [{ex.SqlState}]: {ex.Message}");
-            return false;
+            return (503, $"Database error: {ex.Message}", new { });
         }
         catch (Exception ex)
         {
-            Console.WriteLine("General error during registration:");
-            Console.WriteLine(ex.Message);
-            return false;
+            return (500, $"Internal error: {ex.Message}", new { });
         }
     }
 }

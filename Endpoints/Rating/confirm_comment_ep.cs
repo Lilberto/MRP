@@ -26,15 +26,14 @@ public class Confirm_Comment
 
         string? Token = await Tokens.TokenValidate(request, response);
 
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
-
-        Console.WriteLine($"Auth Validation: {isValid}");
 
         if (routeParams.TryGetValue("ratingId", out string? idStr) && int.TryParse(idStr, out int ratingId))
         {
             var RatingData = JsonSerializer.Deserialize<Rating>(await Body_Request.Body_Data(request));
 
+
+            Console.WriteLine($"Received request to confirm comment for rating ID: {ratingId} by user ID: {userId}");
             var statusCode = Confirm_Comment_Service.Confirm_Comment_Logic(ratingId, userId, RatingData!);
 
             switch (statusCode)
@@ -49,7 +48,7 @@ public class Confirm_Comment
                     break;
 
                 case 404:
-                    await Error404.E_404(context);
+                    await Error404.E_404(response);
                     break;
 
                 default:

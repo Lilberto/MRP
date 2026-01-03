@@ -1,44 +1,51 @@
+namespace Logout_Endpoint;
+
 using System.Net;
-using System.Text.Json;
 
 using Logout_Service;
 
+//* Codes
+using Code_200;
+using Error_500;
+using Error_503;
+
+//* Utils
 using Token;
 using Auth_util;
-
-//* Codes
-using Error_401;
-using Code_200;
-
-using Body_request;
-
-namespace Logout_Endpoint;
-
 
 public static class LogoutEndpoint
 {
     public static async Task LogoutUser(HttpListenerContext context, Dictionary<string, string> routeParams)
     {
-        var request = context.Request;
-        var response = context.Response;
-
-        string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
-
-        Console.WriteLine($"Auth Validation: {isValid}");
-
-        if (isValid)
+        try
         {
-            LogoutService.LogoutUserService(Token!);
-            Console.WriteLine("User is logged out!");
+            var request = context.Request;
+            var response = context.Response;
 
-            await Code200.C_200(response, "User is logged out!");
-        } 
-        else
+            string? Token = await Tokens.TokenValidate(request, response);
+            bool isValid = Auth.Auth_User(Token!);
+
+            var (StatusCode, Message) = await LogoutService.LogoutUser(Token!);
+
+            switch (StatusCode)
+            {
+                case 200:
+                    await Code200.C_200(response, new { Message });
+                    break;
+
+                case 503:
+                    await Error503.E_503(response, new { Message });
+                    break;
+
+                default:
+                    await Error500.E_500(response, new { Message });
+                    break;
+            }
+        }       
+        catch (Exception ex)
         {
-            Error401.E_401(response);
-        }   
+            var response = context.Response;
+            await Error500.E_500(response, ex);
+        }
     }
-
 }

@@ -15,6 +15,9 @@ public class DB_token
 
         bool exists = (bool?)await checkCmd.ExecuteScalarAsync() ?? false;
 
+        Console.WriteLine($"Token validation in DB: {exists}"); 
+        Console.WriteLine($"Token checked: {token}");
+
         if (!exists)
         {
             return false;

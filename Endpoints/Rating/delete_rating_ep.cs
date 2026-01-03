@@ -47,11 +47,11 @@ public class delete_rating
                     break;
 
                 case 404:
-                    await Error404.E_404(context);
+                    await Error404.E_404(response);
                     break;
 
                 case 409:
-                    await Error409.E_409(context);
+                    await Error409.E_409(response, new { message = "Rating does not exist!" });
                     break;
 
 

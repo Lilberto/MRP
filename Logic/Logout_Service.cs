@@ -1,44 +1,35 @@
-using Npgsql;
-
-using Hash_util;
-
 namespace Logout_Service;
 
+using Npgsql;
+
+// utils
+using DBConnection;
+
+
 public static class LogoutService
-{
-    private const string ConnectionString = @"
-        Host=localhost;
-        Port=5432;
-        Database=mrp_db;
-        Username=admin;
-        Password=mrp123;"
-    ;
-    public static bool LogoutUserService(string token)
+{    
+    public static async Task<(int StatusCode, string Message)> LogoutUser(string token)
     {
         try
         {
-            using var conn = new NpgsqlConnection(ConnectionString);
-            conn.Open();
+            using var conn = DbFactory.GetConnection();
+            await conn.OpenAsync();
 
-            string updateQuery = "UPDATE users SET token_created_At = NULL WHERE token = @token;";
+            string updateQuery = "UPDATE users SET token_created_At = NULL, token = NULL WHERE token = @token;";
             using var Cmd = new NpgsqlCommand(updateQuery, conn);
             Cmd.Parameters.AddWithValue("@token", token);
 
-            Cmd.ExecuteNonQuery();
+            await Cmd.ExecuteNonQueryAsync();
 
-            return true;
+            return (200, "Logout successful");
         }
-        catch (NpgsqlException ex)
+        catch (NpgsqlException)
         {
-            Console.WriteLine("Database error during logout:");
-            Console.WriteLine($"PostgreSQL Error [{ex.SqlState}]: {ex.Message}");
-            return false;
+            return (503, "Database error during logout");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine("General error during logout:");
-            Console.WriteLine(ex.Message);
-            return false;
+            return (500, "General error during logout");
         }
     }
 }

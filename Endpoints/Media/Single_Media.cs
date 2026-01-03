@@ -1,16 +1,18 @@
+namespace SingleMediaEndpoint;
+
 using System.Net;
 
-using Token;
-using Auth_util;
-
+//* codes
 using Code_200;
 using Error_400;
 using Error_404;
+using Error_409;
 using Error_500;
 
-using Single_Media_extract;
+//* utils
+using Token;
 
-namespace SingleMediaEndpoint;
+using Single_Media_extract;
 
 public class Single_Media_Endpoint
 {
@@ -23,40 +25,43 @@ public class Single_Media_Endpoint
         {
             string? Token = await Tokens.TokenValidate(request, response);
 
-            bool isValid = Auth.Auth_User(Token!);
-
-            Console.WriteLine($"Auth Validation: {isValid}");
-
-            if (isValid)
+            if (routeParams.TryGetValue("id", out string? idValue) && int.TryParse(idValue, out int mediaId))
             {
-                if (routeParams.TryGetValue("id", out string? idValue))
-                {
-                    int mediaId = int.Parse(idValue);
-                    Console.WriteLine($"MediaID out of URL: {mediaId}");
+                Console.WriteLine($"MediaID out of URL: {mediaId}");
 
-                    var media = Single_Media_extract_service.Single_Media_extract(mediaId);
+                var (StatusCode, Message, Data, Rating) = await Single_Media_extract_service.Single_Media_extract(mediaId);
 
-                    if (media != null)
-                    {
-                        await Code200.C_200(response, media);
-                    }
-                }
-                else
+
+                switch (StatusCode)
                 {
-                    await Error400.E_400(context);
+                    case 200:
+                        await Code200.C_200(response, new { message = Message, Media = Data, Ratings = Rating });
+                        return;
+
+                    case 404:
+                        await Error404.E_404(response);
+                        return;
+
+                    case 409:
+                        await Error409.E_409(response, Message);
+                        return;
+
+                    default:
+                        await Error500.E_500(response, Message);
+                        return;
                 }
-            } 
+            }
             else
             {
-                await Error404.E_404(context);
+                await Error400.E_400(response, new { message = "Invalid Media ID format." });
+                return;
             }
-
-
         }
         catch (Exception ex)
         {
-            await Error500.E_500(response, ex);
+            await Error500.E_500(response, new { message = "An internal server error occurred.", detail = ex.Message });
         }
 
     }
+
 }

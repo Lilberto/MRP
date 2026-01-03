@@ -42,7 +42,7 @@ public class Fav_List
                     break;
 
                 case 404:
-                    await Error404.E_404(context);
+                    await Error404.E_404(response);
                     break;
 
                 default:

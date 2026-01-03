@@ -11,13 +11,19 @@ public class Confirm_Comment_Service
         using var conn = new NpgsqlConnection(ConnectionString);
         conn.Open();
 
-        // checks if the rating exists
-        using var checkCmd = new NpgsqlCommand("SELECT user_id FROM ratings WHERE id = @id", conn);
-        checkCmd.Parameters.AddWithValue("id", ratingId);
-        var ownerId = checkCmd.ExecuteScalar();
+        // Console.WriteLine($"Opened DB connection for confirming comment on rating ID: {ratingId} by user ID: {userId}");
+        
+        // // checks if the rating exists
+        // using var checkCmd = new NpgsqlCommand("SELECT user_id FROM ratings WHERE id = @id;", conn);
+        // checkCmd.Parameters.AddWithValue("id", ratingId);
+        // var ownerId = checkCmd.ExecuteScalar();
 
-        if (ownerId == null) return 404; // not found any userid
-        if ((int)ownerId != userId) return 403; // forbidden: user is NOT the owner of this rating
+        // Console.WriteLine($"Owner ID from DB: {ownerId}");
+
+        // if (ownerId == null) return 404; // not found any userid
+        // if ((int)ownerId != userId) return 403; // forbidden: user is NOT the owner of this rating
+
+        // Console.WriteLine($"User {userId} is the owner of rating {ratingId}, proceeding to confirm comment.");
 
         try
         {

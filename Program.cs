@@ -39,11 +39,11 @@ using Leaderboard_EP;
 using Error_404;
 using Error_400;
 
+//! ExecuteScalarAsync überprüfen
+//! Error Code 409 Überprüfen  
+
 //! Register DB logic refabric
 //! Login DB logic refabric
-
-//! Profile DB logic
-//! Leaderboard DB logic
 
 //! Logout may need a confirmation and a response when user is already logged out 
 
@@ -66,7 +66,7 @@ class Program
 
             if (context.Request?.Url == null)
             {
-                await Error400.E_400(context);
+                await Error400.E_400(context.Response, context);
             } else {
                 Console.WriteLine($"[DEBUG] {context.Request.HttpMethod} {context.Request.Url.AbsolutePath}");
             }
@@ -101,7 +101,7 @@ public static class Router
 
         // Media rating
         new Route("POST", @"^/api/media/(?<mediaId>[0-9]+)/rate$", (ctx, p) => New_Rating.New_Rating_Site(ctx, p)), //new rating
-        new Route("PUT", @"^/api/ratings/(?<ratingId>[0-9]+)$", (ctx, p) => Update_Rating.Update_Rating_Site(ctx, p)), //update rating
+        new Route("PUT", @"^/api/ratings/(?<mediaId>[0-9]+)$", (ctx, p) => Update_Rating.Update_Rating_Site(ctx, p)), //update rating
         new Route("DELETE", @"^/api/ratings/(?<ratingId>[0-9]+)$", (ctx, p) => delete_rating.delete_rating_site(ctx, p)), //delete rating
         new Route("POST", @"^/api/ratings/(?<ratingId>[0-9]+)/confirm$", (ctx, p) => Confirm_Comment.Confirm_Comment_Site(ctx, p)), //confirm comment
         new Route("POST", @"^/api/ratings/(?<ratingId>[0-9]+)/like$", (ctx, p) => Like_Rating_EP.Like_Rating_Site(ctx, p)), //like rating
@@ -122,7 +122,7 @@ public static class Router
     {
         if (context.Request?.Url == null)
         {
-            await Error400.E_400(context);
+            await Error400.E_400(context.Response, context);
             return;
         }
 
@@ -147,12 +147,7 @@ public static class Router
             }
         }
 
-        // context.Response.StatusCode = 404;
-        // byte[] buffer = Encoding.UTF8.GetBytes("Not Found");
-        // await context.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-        // context.Response.Close();
-
-        await Error404.E_404(context);
+        await Error404.E_404(context.Response);
     }
 
     private class Route

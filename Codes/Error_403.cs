@@ -6,20 +6,17 @@ namespace Error_403
 {
     public class Error403
     {
-        public static void E_403(HttpListenerResponse response)
+        public static async Task E_403(HttpListenerResponse response, object? result = null)
         {
             response.StatusCode = 403;
-            response.StatusDescription = "Unauthorized";
             response.ContentType = "application/json";
-            
-            var errorResponse = new { 
-                error = "Unauthorized" 
-            };
-            
-            string json = JsonSerializer.Serialize(errorResponse);
+
+            var finalResult = result ?? new { error = "Forbidden", message = "You do not have permission to access this resource." };
+
+            string json = JsonSerializer.Serialize(finalResult);
             byte[] buffer = Encoding.UTF8.GetBytes(json);
-            response.ContentLength64 = buffer.Length;
-            response.OutputStream.Write(buffer, 0, buffer.Length);
+
+            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
             response.OutputStream.Close();
         }
     }

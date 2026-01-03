@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public class Rating
 {
     public int Id { get; set; }
@@ -10,7 +12,6 @@ public class Rating
     public int MediaId { get; set; }
     public Media Media { get; set; }      
 
-    // rating
     [Range(1, 5)]
     public int Stars { get; set; } // 1–5
     
@@ -18,11 +19,9 @@ public class Rating
     public string? Comment { get; set; }
     public bool CommentPublished { get; set; } = false;
 
-    // Likes
     public int LikesCount { get; set; } = 0;
     public bool LikedByMe { get; set; } = false;
 
-    // Timestamps
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
