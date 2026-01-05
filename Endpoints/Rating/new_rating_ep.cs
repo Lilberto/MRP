@@ -44,12 +44,11 @@ public class New_Rating
                 switch (StatusCode)
                 {
                     case 201:
-                        var result = new { Message };
-                        await Code201.C_201(response, result);
+                        await Code201.C_201(response, Message);
                         break;
 
                     case 404:
-                        await Error404.E_404(response);
+                        await Error404.E_404(response, Message);
                         break;
 
                     case 409:

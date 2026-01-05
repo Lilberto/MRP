@@ -1,20 +1,15 @@
 namespace DeleteFavoriteMediaEP;
 
-using System.Text.Json;
 using System.Net;
 
 using DeleteFavoriteMediaService;
 
-// utils
+//* utils
 using Token;
-using Auth_util;
-using Body_request;
 
-// codes
+//* codes
 using Code_200;
-using Error_400;
 using Error_404;
-using Error_409;
 using Error_500;
 
 public class Delete_Favorite_Media
@@ -25,36 +20,33 @@ public class Delete_Favorite_Media
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
 
-        Console.WriteLine($"Auth Validation: {isValid}");
-
-        if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
+        try
         {
-            var statusCode = Delete_Favorite_Media_Service.Delete_Favorite_Media_Logic(mediaId, userId);
-            Console.WriteLine($"StatusCode: {statusCode}");
-
-            switch (statusCode)
+            if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
             {
-                case 200:
-                    var result = new { message = "Media has been removed from favorites!" };
-                    await Code200.C_200(response, result);
-                    break;
-                
-                case 404:
-                    await Error404.E_404(response);
-                    break;
+                var (StatusCode, Message) = await Delete_Favorite_Media_Service.Delete_Favorite_Media_Logic(mediaId, userId);
 
-                case 409:
-                    await Error409.E_409(response, new { message = "Media is not in favorites!" });
-                    break;
+                switch (StatusCode)
+                {
+                    case 200:
+                        await Code200.C_200(response, new { message = Message });
+                        break;
 
-                default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
-                    break;
+                    case 404:
+                        await Error404.E_404(response, new { message = Message });
+                        break;
+
+                    default:
+                        await Error500.E_500(response, new { message = Message });
+                        break;
+                }
             }
         }
-    } 
+        catch (Exception ex)
+        {
+            await Error500.E_500(response, new { message = "An internal server error occurred.", detail = ex.Message });
+        }
+    }
 }

@@ -19,46 +19,48 @@ public static class RegisterEndpoint
     public static async Task RegisterSite(HttpListenerContext context, Dictionary<string, string> routeParams)
     {
         var response = context.Response;
+
         UserRegisterDTO? registerData = null;
 
-        try 
+        try
         {
             string body = await Body_Request.Body_Data(context.Request);
-            
             registerData = JsonSerializer.Deserialize<UserRegisterDTO>(body);
-            
+
             if (registerData == null || string.IsNullOrEmpty(registerData.Username) || string.IsNullOrEmpty(registerData.Password))
             {
-                await Error400.E_400(response, new { Message = "Field 'username' or 'password' is misspelled or missing." });
+                await Error400.E_400(response, new { Message = "Username or password missing." });
                 return;
             }
         }
         catch (JsonException)
         {
             await Error400.E_400(response, new { Message = "Invalid JSON format." });
-            return; 
+            return;
         }
 
         var (StatusCode, Message, Data) = await RegisterService.RegisterUser(registerData);
-        Console.WriteLine($"Register Endpoint returned Status Code: {StatusCode}");
 
         switch (StatusCode)
         {
             case 201:
-                await Code201.C_201(response, new { Message = Message, Data = Data });
+                await Code201.C_201(response, new { Message, Data });
                 break;
 
+            case 400:
+                await Error400.E_400(response, new { Message });
+                break;
+            
             case 409:
-                await Error409.E_409(response, new { Message = Message, Data = Data });
+                await Error409.E_409(response, new { Message, Data });
                 break;
-
+            
             case 503:
-                await Error503.E_503(response, new { Message = Message, Data = Data });
+                await Error503.E_503(response, new { Message, Data });
                 break;
-
-            case 500:
+            
             default:
-                await Error500.E_500(response, new { Message = Message, Data = Data });
+                await Error500.E_500(response, new { Message, Data });
                 break;
         }
     }

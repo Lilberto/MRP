@@ -4,12 +4,12 @@ using System.Net;
 
 using DeleteRatingLogic;
 
-// utils
+//* utils
 using Token;
-using Auth_util;
 
-// codes
+//* codes
 using Code_201;
+using Error_400;
 using Error_403;
 using Error_404;
 using Error_409;
@@ -22,43 +22,47 @@ public class delete_rating
         var request = context.Request;
         var response = context.Response;
 
-        string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
-        int userId = UserID.User_ID.UserID_DB(Token!);
-
-        Console.WriteLine($"Auth Validation: {isValid}");
-
-        if (routeParams.TryGetValue("ratingId", out string? idStr) && int.TryParse(idStr, out int ratingId))
+        try
         {
-            int statusCode = delete_rating_service.delete_rating_logic(ratingId, userId);
+            string? Token = await Tokens.TokenValidate(request, response);
+            int userId = UserID.User_ID.UserID_DB(Token!);
 
-            Console.WriteLine($"StatusCode: {statusCode}");
-
-            switch (statusCode)
+            if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
             {
-                case 200:
-                    var result = new { message = "Rating deleted successfuly!" };
-                    await Code201.C_201(response, result);
-                    break;
+                var (StatusCode, Message) = await delete_rating_service.delete_rating_logic(mediaId, userId);
 
-                case 403:
-                    Error403.E_403(response);
-                    break;
+                switch (StatusCode)
+                {
+                    case 200:
+                        await Code201.C_201(response, Message);
+                        break;
 
-                case 404:
-                    await Error404.E_404(response);
-                    break;
+                    case 403:
+                        await Error403.E_403(response, Message);
+                        break;
 
-                case 409:
-                    await Error409.E_409(response, new { message = "Rating does not exist!" });
-                    break;
+                    case 404:
+                        await Error404.E_404(response, Message);
+                        break;
+
+                    case 409:
+                        await Error409.E_409(response, Message);
+                        break;
 
 
-                default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
-                    break;
+                    default:
+                        await Error500.E_500(response, Message);
+                        break;
+                }
             }
+            else
+            {
+                await Error400.E_400(response, new { message = "Invalid media ID!" });
+            }
+        }
+        catch (Exception)
+        {
+            await Error500.E_500(response, new { message = "An unexpected server error occurred." });
         }
     }
 }

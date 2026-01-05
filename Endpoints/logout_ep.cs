@@ -11,7 +11,6 @@ using Error_503;
 
 //* Utils
 using Token;
-using Auth_util;
 
 public static class LogoutEndpoint
 {
@@ -23,7 +22,6 @@ public static class LogoutEndpoint
             var response = context.Response;
 
             string? Token = await Tokens.TokenValidate(request, response);
-            bool isValid = Auth.Auth_User(Token!);
 
             var (StatusCode, Message) = await LogoutService.LogoutUser(Token!);
 

@@ -4,14 +4,15 @@ using System.Net;
 
 using LikeRatingLogic;
 
-// utils
+//* utils
 using Token;
-using Auth_util;
 
-// codes
+//* codes
 using Code_200;
+using Code_201;
 using Error_403;
 using Error_404;
+using Error_409;
 using Error_500;
 
 public class Like_Rating_EP
@@ -22,37 +23,45 @@ public class Like_Rating_EP
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
 
-        Console.WriteLine($"Auth Validation: {isValid}");
-
-        if (routeParams.TryGetValue("ratingId", out string? idStr) && int.TryParse(idStr, out int ratingId))
+        try
         {
-            int statusCode = Like_Rating_Service.Like_Rating_Logic(ratingId, userId);
-
-            Console.WriteLine($"StatusCode: {statusCode}");
-
-            switch (statusCode)
+            if (routeParams.TryGetValue("ratingId", out string? idStr) && int.TryParse(idStr, out int ratingId))
             {
-                case 200:
-                    var result = new { message = "Rating deleted successfuly!" };
-                    await Code200.C_200(response, result);
-                    break;
+                var (StatusCode, Message) = await Like_Rating_Service.Like_Rating_Logic(ratingId, userId);
 
-                case 403:
-                    Error403.E_403(response);
-                    break;
+                switch (StatusCode)
+                {
+                    case 200: // Unliked successfully
+                        await Code200.C_200(response, new { message = Message });
+                        break;
 
-                case 404:
-                    await Error404.E_404(response);
-                    break;
+                    case 201: // Liked successfully
+                        await Code201.C_201(response, new { message = Message });
+                        break;
 
-                default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
-                    break;
+                    case 403: // Not allowed (to like own rating)
+                        await Error403.E_403(response, new { message = Message });
+                        break;
+
+                    case 404: // Not found
+                        await Error404.E_404(response, new { message = Message });
+                        break;
+
+                    case 409: // Already liked
+                        await Error409.E_409(response, new { message = Message });
+                        break;
+
+                    default:
+                        await Error500.E_500(response, new { message = Message });
+                        break;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            await Error500.E_500(response, new { message = "Internal error.", detail = ex.Message });
         }
     }
 }

@@ -1,15 +1,11 @@
 namespace Leaderboard_EP;
 
 using System.Net;
-using System.Text;
-using System.Text.Json;
 
-// utils
+//* utils
 using Token;
-using Auth_util;
-using Body_request;
 
-// codes
+//* codes
 using Code_200;
 using Error_500;
 
@@ -23,15 +19,9 @@ public static class LeaderboardEndpoint
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
 
-        Console.WriteLine($"Auth Validation: {isValid}");
-
         var (statusCode, data) = await Leaderboard_Service.Leaderboard_Logic();
-
-        Console.WriteLine($"StatusCode: {statusCode}");
 
         switch (statusCode)
         {

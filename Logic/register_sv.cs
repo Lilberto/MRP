@@ -1,8 +1,9 @@
 namespace Register_Service;
 
 using Npgsql;
+using System.Text.RegularExpressions;
 
-// utils
+//* utils
 using Hash_util;
 using DBConnection;
 
@@ -10,11 +11,31 @@ public static class RegisterService
 {
     public static async Task<(int StatusCode, string Message, List<UserRegisterDTO> Data)> RegisterUser(UserRegisterDTO User_data)
     {
+        //############################################//
+        // Checks input against security requirements //
+        //############################################//
+        string userPattern = @"^[A-Za-z0-9_-]+$";
+        string passPattern = @"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$";
+
+        if (!Regex.IsMatch(User_data.Username, userPattern))
+        {
+            return (400, "Username must be 3-20 alphanumeric characters.", new List<UserRegisterDTO>());
+        }
+
+        if (!Regex.IsMatch(User_data.Password, passPattern))
+        {
+            return (400, "Password needs 8+ characters, letters and numbers.", new List<UserRegisterDTO>());
+        }
+
+
         try
         {
             using var conn = DbFactory.GetConnection();
             await conn.OpenAsync();
 
+            //###################################//
+            // Ensures the username is not taken //
+            //###################################//
             string checkQuery = "SELECT COUNT(*) FROM users WHERE username = @username;";
             using var checkCmd = new NpgsqlCommand(checkQuery, conn);
             checkCmd.Parameters.AddWithValue("@username", User_data.Username);
@@ -27,7 +48,7 @@ public static class RegisterService
             }
 
             //###################################//
-            // Salt generation and Password hash //
+            // ashes password and saves new user //
             //###################################//
             string salt = Hash.GenerateSalt();
             string passwordHash = Hash.HashPassword(User_data.Password, salt);

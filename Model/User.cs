@@ -36,8 +36,8 @@ public class UserProfileDTO
     public string Username { get; set; } = "";
     public DateTime MemberSince { get; set; }
     
-    public int TotalMediaEntries { get; set; } // How many media entries the user has uploaded
-    public int TotalRatingsGiven { get; set; } // How often has he rated
-    public double AvgRatingReceived { get; set; } // How good are his uploads rated
+    public int TotalMediaEntries { get; set; } 
+    public int TotalRatingsGiven { get; set; } 
+    public double AvgRatingReceived { get; set; } 
     public string? FavoriteGenre { get; set; }
 }

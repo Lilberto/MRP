@@ -1,16 +1,13 @@
 namespace AllMediaEndpoint;
 
 using System.Net;
-using System.Text.Json;
 
 //* utils
 using Token;
-using Auth_util;
 
 //* codes
 using Code_200;
 using Code_201;
-using Error_400;
 using Error_409;
 using Error_500;
 
@@ -28,16 +25,13 @@ public class All_Media_Endpoint
         {
             string? Token = await Tokens.TokenValidate(request, response);
 
-            bool isValid = Auth.Auth_User(Token!);
-
-            Console.WriteLine($"Auth Validation: {isValid}");
-
             var filter = new MediaSearchFilter {
                 Title = request.QueryString["title"],
                 Genre = request.QueryString["genre"],
                 MediaType = request.QueryString["mediaType"],
                 AgeRestriction = request.QueryString["ageRestriction"],
-                SortBy = request.QueryString["sortBy"]
+                SortBy = request.QueryString["sortBy"],
+                Username = request.QueryString["username"]
             };
 
             if (int.TryParse(request.QueryString["releaseYear"], out int year)) filter.ReleaseYear = year;

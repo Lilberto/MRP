@@ -1,21 +1,18 @@
 namespace SetFavoriteMediaEP;
 
-using System.Text.Json;
 using System.Net;
 
-using SetFavoriteMediaService;
-
-// utils
+//* utils
 using Token;
-using Auth_util;
-using Body_request;
 
-// codes
+//* codes
 using Code_201;
 using Error_400;
 using Error_404;
 using Error_409;
 using Error_500;
+
+using SetFavoriteMediaService;
 
 public class Set_Favorite_Media
 {
@@ -25,40 +22,41 @@ public class Set_Favorite_Media
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
 
-        Console.WriteLine($"Auth Validation: {isValid}");
-
-        if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
+        try
         {
-            var statusCode = Set_Favorite_Media_Service.Set_Favorite_Media_Logic(mediaId, userId);
-            Console.WriteLine($"StatusCode: {statusCode}");
-
-            switch (statusCode)
+            if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
             {
-                case 201:
-                    var result = new { message = "Media set to favorites!" };
-                    await Code201.C_201(response, result);
-                    break;
+                var (StatusCode, Message) = await Set_Favorite_Media_Service.Set_Favorite_Media_Logic(mediaId, userId);
 
-                case 400:
-                    await Error400.E_400(response, new { message = "Invalid media ID!" });
-                    break;
+                switch (StatusCode)
+                {
+                    case 201:
+                        await Code201.C_201(response, new { Message });
+                        break;
 
-                case 404:
-                    await Error404.E_404(response);
-                    break;
+                    case 400:
+                        await Error400.E_400(response, new { Message });
+                        break;
 
-                case 409:
-                    await Error409.E_409(response, new { message = "Media is already in favorites!" });
-                    break;
+                    case 404:
+                        await Error404.E_404(response, new { Message });
+                        break;
 
-                default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
-                    break;
+                    case 409:
+                        await Error409.E_409(response, new { Message });
+                        break;
+
+                    default:
+                        await Error500.E_500(response, new { Message });
+                        break;
+                }
             }
         }
-    } 
+        catch (Exception ex)
+        {
+            await Error500.E_500(response, new { message = "An internal server error occurred.", detail = ex.Message });
+        }
+    }
 }

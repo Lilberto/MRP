@@ -7,7 +7,6 @@ using ConfirmCommentLogic;
 
 // utils
 using Token;
-using Auth_util;
 using Body_request;
 
 // codes
@@ -25,36 +24,63 @@ public class Confirm_Comment
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
         int userId = UserID.User_ID.UserID_DB(Token!);
 
-        if (routeParams.TryGetValue("ratingId", out string? idStr) && int.TryParse(idStr, out int ratingId))
+        try
         {
-            var RatingData = JsonSerializer.Deserialize<Rating>(await Body_Request.Body_Data(request));
-
-
-            Console.WriteLine($"Received request to confirm comment for rating ID: {ratingId} by user ID: {userId}");
-            var statusCode = Confirm_Comment_Service.Confirm_Comment_Logic(ratingId, userId, RatingData!);
-
-            switch (statusCode)
+            if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
             {
-                case 200:
-                    var result = new { message = "Rating is now visible!" };
-                    await Code200.C_200(response, result);
-                    break;
+                //###################################//
+                // Try/Catch for invalid JSON format //
+                //###################################//
+                Rating? RatingData = null;
+                try
+                {
+                    RatingData = JsonSerializer.Deserialize<Rating>(await Body_Request.Body_Data(request));
+                }
+                catch (JsonException)
+                {
+                    await Error400.E_400(response, new { message = "Invalid JSON format." });
+                    return;
+                }
 
-                case 403:
-                    Error403.E_403(response);
-                    break;
+                //################################//
+                // Checks if the confirm is empty //
+                //################################//
+                if (RatingData == null)
+                {
+                    await Error400.E_400(response, new { message = "Invalid rating data!" });
+                }
 
-                case 404:
-                    await Error404.E_404(response);
-                    break;
+                var (StatusCode, Message) = await Confirm_Comment_Service.Confirm_Comment_Logic(mediaId, userId, RatingData!);
 
-                default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
-                    break;
+                switch (StatusCode)
+                {
+                    case 200:
+                        await Code200.C_200(response, new { message = Message });
+                        break;
+
+                    case 403:
+                        await Error403.E_403(response, new { message = Message });
+                        break;
+
+                    case 404:
+                        await Error404.E_404(response, new { message = Message });
+                        break;
+
+                    default:
+                        await Error500.E_500(response, new { message = Message });
+                        break;
+                }
             }
+            else
+            {
+                await Error400.E_400(response, new { message = "Invalid media ID!" });
+            }
+        }
+        catch (Exception)
+        {
+            await Error500.E_500(response, new { message = "An unexpected server error occurred." });
         }
     }
 }

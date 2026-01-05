@@ -1,4 +1,3 @@
-using Auth_util;
 using Npgsql;
 
 namespace UserID;

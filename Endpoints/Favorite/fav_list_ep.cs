@@ -1,16 +1,13 @@
 namespace FavListEP;
 
-using System.Text.Json;
 using System.Net;
 
 using FavListService;
 
-// utils
+//* utils
 using Token;
-using Auth_util;
-using Body_request;
 
-// codes
+//* codes
 using Code_200;
 using Error_404;
 using Error_500;
@@ -23,30 +20,24 @@ public class Fav_List
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
-
-        Console.WriteLine($"Auth Validation: {isValid}");
 
         if (routeParams.TryGetValue("username", out string? username) && !string.IsNullOrEmpty(username))
         {
-            var (statusCode, data) = await Fav_List_Service.Fav_List_Logic(username, Token!, userId);
-            Console.WriteLine($"StatusCode: {statusCode}");
+            var (StatusCode, Message, Data) = await Fav_List_Service.Fav_List_Logic(userId, username);
 
-            switch (statusCode)
+            switch (StatusCode)
             {
                 case 200:
-                    var result = new { favorites = data };
-                    await Code200.C_200(response, result);
+                    await Code200.C_200(response, new { mesage = Message, Media = Data});
                     break;
 
                 case 404:
-                    await Error404.E_404(response);
+                    await Error404.E_404(response, new { mesage = Message, Media = Data});
                     break;
 
                 default:
-                    await Error500.E_500(response, new Exception("Unknown error"));
+                    await Error500.E_500(response, new { mesage = Message, Media = Data});
                     break;
             }
         }

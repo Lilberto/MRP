@@ -3,7 +3,6 @@ using System.Text.Json;
 
 //* utils
 using Token;
-using Auth_util;
 
 //* codes
 using Code_200;
@@ -37,7 +36,7 @@ public class Media_Delete_Endpoint
                         return;
 
                     case 403:
-                        Error403.E_403(response);
+                        await Error403.E_403(response);
                         return;
 
                     case 404:

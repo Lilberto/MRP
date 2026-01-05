@@ -7,7 +7,6 @@ using Media_insert;
 
 //* utils
 using Token;
-using Auth_util;
 using Body_request;
 
 //* codes
@@ -26,11 +25,7 @@ public class Media_Endpoint
         try
         {
             string? Token = await Tokens.TokenValidate(request, response);
-
-            bool isValid = Auth.Auth_User(Token!);
             int User_ID = UserID.User_ID.UserID_DB(Token!);
-
-            Console.WriteLine($"Auth Validation: {isValid}, User_id: {User_ID}");
 
             var MediaData = JsonSerializer.Deserialize<Media>(await Body_Request.Body_Data(request));
 
@@ -48,11 +43,6 @@ public class Media_Endpoint
             switch (StatusCode)
             {
                 case 201:
-                    var result = new
-                    {
-                        message = "Media entry successful!",
-                        mediaId = Data?.id
-                    };
                     await Code201.C_201(response, new { message = Message, Media = Data });
                     break;
 

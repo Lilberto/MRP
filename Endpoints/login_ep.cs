@@ -13,7 +13,6 @@ using Error_500;
 using Error_503;
 
 // utils
-using Successful_response;
 using Body_request;
 
 using Login_Service;

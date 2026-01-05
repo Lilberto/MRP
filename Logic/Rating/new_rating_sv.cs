@@ -14,21 +14,31 @@ public static async Task<(int StatusCode, string Message)> New_Rating_Logic(int 
 
     try
     {
-        using var checkCmd = new NpgsqlCommand("SELECT id FROM media_entries WHERE id = @id", conn);
+        //####################################################//
+        // Check if media exists and is not owned by the user //
+        //####################################################//
+        using var checkCmd = new NpgsqlCommand("SELECT user_id FROM media_entries WHERE id = @id", conn);
         checkCmd.Parameters.AddWithValue("id", mediaId);
-        var mediaExists = await checkCmd.ExecuteScalarAsync();
+        var mediaOwnerIdObj = await checkCmd.ExecuteScalarAsync();
         
-        if (mediaExists == null) 
+        if (mediaOwnerIdObj == null) 
             return (404, "Media not found");
+
+        //###########################################//
+        // Prevent users from rating their own media //
+        //###########################################//
+        if (Convert.ToInt32(mediaOwnerIdObj) == userId)
+                return (403, "You cannot rate your own media entries.");
 
         string createRatingQuery = @"
             INSERT INTO ratings (user_id, media_id, stars, comment, created_at, updated_at)
-            VALUES (@user_id, @media_id, @stars, @comment, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            RETURNING id;";
+            VALUES (@uId, @mId, @stars, @comment, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING id;
+        ";
 
         using var cmd = new NpgsqlCommand(createRatingQuery, conn);
-        cmd.Parameters.AddWithValue("user_id", userId);
-        cmd.Parameters.AddWithValue("media_id", mediaId);
+        cmd.Parameters.AddWithValue("uId", userId);
+        cmd.Parameters.AddWithValue("mId", mediaId);
         cmd.Parameters.AddWithValue("stars", RatingData.Stars);
         cmd.Parameters.AddWithValue("comment", (object?)RatingData.Comment ?? DBNull.Value);
 

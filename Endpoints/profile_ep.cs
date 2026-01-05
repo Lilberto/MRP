@@ -1,20 +1,22 @@
-namespace RatingHistoryEP;
-
 using System.Net;
 
-using RatingHistoryService;
+using Profile_Service;
 
 //* utils
 using Token;
 
-//* codes
+//*s codes
 using Code_200;
+using Error_403;
 using Error_404;
 using Error_500;
 
-public static class Rating_History
+
+namespace ProfileEP;
+
+public static class ProfileEndpoint
 {
-    public static async Task Rating_History_Site(HttpListenerContext context, Dictionary<string, string> routeParams)
+    public static async Task ProfileSite(HttpListenerContext context, Dictionary<string, string> routeParams)
     {
         var request = context.Request;
         var response = context.Response;
@@ -24,23 +26,28 @@ public static class Rating_History
 
         if (routeParams.TryGetValue("username", out string? username) && !string.IsNullOrEmpty(username))
         {
-            var (StatusCode, Message, history) = await Rating_History_Service.Rating_History_Logic(userId, username, Token!);
+            var (StatusCode, Message, profileData) = await ProfileService.Profile_User(userId, username);
 
             switch (StatusCode)
             {
                 case 200:
-                    await Code200.C_200(response, new { message = Message, rating_history = history });
+                    await Code200.C_200(response, new { Message, profile = profileData });
+                    break;
+
+                case 403:
+                    await Error403.E_403(response, new { Message });
                     break;
 
                 case 404:
-                    await Error404.E_404(response);
+                    await Error404.E_404(response, new { Message });
                     break;
-                    
+
+                case 500:
                 default:
                     await Error500.E_500(response, new { Message });
                     break;
             }
         }
-    }
 
+    }
 }

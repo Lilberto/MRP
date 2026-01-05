@@ -1,17 +1,15 @@
 namespace RecommendationsEP;
 
 using System.Net;
-using System.Text.Json;
 
 using Recommendations_Service;
 
-// utils
+//* utils
 using Token;
-using Auth_util;
-using Body_request;
 
-// codes
+//* codes
 using Code_200;
+using Error_404;
 using Error_500;
 
 public class Recommendations_EP
@@ -22,33 +20,25 @@ public class Recommendations_EP
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-
-        bool isValid = Auth.Auth_User(Token!);
         int userId = UserID.User_ID.UserID_DB(Token!);
-
-        Console.WriteLine($"Auth Validation: {isValid}");
 
         if (routeParams.TryGetValue("username", out string? username) && !string.IsNullOrEmpty(username))
         {
-            bool userTokenValid = Auth.Auth_User_Token(username, Token!);
-
-            if (!userTokenValid)
-            {
-                await Error500.E_500(response, new Exception("Authentication failed for user & token."));
-                return;
-            }
 
             var (StatusCode, Message, Data) = await Recommendations_Service.Recommendations_Logic(userId);
 
             switch (StatusCode)
             {
                 case 200:
-                    var result = new { Message, recommendations = Data };
-                    await Code200.C_200(response, result);
+                    await Code200.C_200(response, new { Message, recommendations = Data });
+                    break;
+
+                case 404:
+                    await Error404.E_404(response, new { Message, recommendations = Data });
                     break;
 
                 default:
-                    await Error500.E_500(response, new Exception("Error fetching recommendations"));
+                    await Error500.E_500(response, new { Message, recommendations = Data });
                     break;
             }
         }

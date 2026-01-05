@@ -34,8 +34,8 @@ public class Media_update_service
             checkCmd.Parameters.AddWithValue("id", mediaID);
             var ownerIdObj = await checkCmd.ExecuteScalarAsync();
 
-            if (ownerIdObj == null) return (404, "Media not found", null!); // Does not exist
-            if (Convert.ToInt32(ownerIdObj) != userID) return (403, "Forbidden: You are not the owner", null!); // Another user created the media
+            if (ownerIdObj == null) return (404, "Media not found", null!);
+            if (Convert.ToInt32(ownerIdObj) != userID) return (403, "Forbidden: You are not the owner", null!); 
 
 
             string MediaExtractSingleQuery = @"

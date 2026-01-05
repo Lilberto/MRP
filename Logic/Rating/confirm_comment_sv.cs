@@ -1,13 +1,13 @@
-namespace UpdateRatingLogic;
+namespace ConfirmCommentLogic;
 
 using Npgsql;
 
 //* utils
 using DBConnection;
 
-public class Update_Rating_Service
+public class Confirm_Comment_Service
 {
-    public static async Task<(int StatusCode, string Message)> Update_Rating_Logic(int mediaId, int userId, Rating RatingData)
+    public static async Task<(int StatusCode, string Message)> Confirm_Comment_Logic(int mediaId, int userId, Rating ratingData)
     {
         using var conn = DbFactory.GetConnection();
         await conn.OpenAsync();
@@ -20,32 +20,29 @@ public class Update_Rating_Service
             var ownerIdObj = await checkCmd.ExecuteScalarAsync();
 
             if (ownerIdObj == null) return (404, "Rating not found.");
-
-            Console.WriteLine($"Owner ID: {ownerIdObj}, User ID: {userId}");
-            if (Convert.ToInt32(ownerIdObj) != userId) return (403, "Not your rating.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Check Error: {ex.Message}");
             return (500, "Error during rating verification.");
         }
 
+
         try
         {
-            string CreateRatingQuery = @"
-                UPDATE ratings 
-                SET stars = @stars, comment = @comment, updated_at = CURRENT_TIMESTAMP
+            string ConfirmQuery = @"
+                UPDATE ratings
+                SET
+                    comment_published = @status
                 WHERE media_id = @mId AND user_id = @uId;
             ";
 
-            using var CMD = new NpgsqlCommand(CreateRatingQuery, conn);
-            CMD.Parameters.AddWithValue("uId", userId);
+            using var CMD = new NpgsqlCommand(ConfirmQuery, conn);
             CMD.Parameters.AddWithValue("mId", mediaId);
-            CMD.Parameters.AddWithValue("stars", RatingData.Stars!);
-            CMD.Parameters.AddWithValue("comment", (object)RatingData.Comment! ?? DBNull.Value);
+            CMD.Parameters.AddWithValue("uId", userId);
+            CMD.Parameters.AddWithValue("status", ratingData.CommentPublished);
 
-            var rows = await CMD.ExecuteNonQueryAsync();
-            if (rows == 0) return (500, "Update failed.");
+            int result = await CMD.ExecuteNonQueryAsync();
+            if (result == 0) return (404, "Rating not found.");
 
             //###############//
             // Update rating //
@@ -64,11 +61,15 @@ public class Update_Rating_Service
             recalcCmd.Parameters.AddWithValue("mId", mediaId);
             await recalcCmd.ExecuteNonQueryAsync();
 
-            return (200, "Rating updated.");
-        }
-        catch (Exception)
+            string action = ratingData.CommentPublished ? "public" : "private";
+            string msg = $"Comment is now {action}.";
+
+            return (200, msg);
+        }        
+        catch (Exception ex)
         {
-            return (500, "Database error during update.");
+            Console.WriteLine($"General Error: {ex.Message}");
+            return (500, "Database error during confirmation.");
         }
     }
 }

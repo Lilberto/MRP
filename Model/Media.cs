@@ -5,6 +5,7 @@ public class Media
 {
     public int id { get; set; }
     public int userid { get; set; }
+    public string username { get; set; } = "";
     public string title { get; set; } = "";
     public string description { get; set; } = "";
     public string type { get; set; } = "";
@@ -36,6 +37,7 @@ public class MediaSearchFilter
     public string? AgeRestriction { get; set; }
     public double? MinRating { get; set; }
     public string? SortBy { get; set; }
+    public string Username { get; set; } = "";
 }
 
 public class MediaDto
@@ -49,4 +51,5 @@ public class MediaDto
     public string AgeRating { get; set; } = "";
     public double Score { get; set; }
     public int CreatorId { get; set; } 
+    public string Username { get; set; }
 }

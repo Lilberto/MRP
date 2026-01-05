@@ -39,17 +39,6 @@ using Leaderboard_EP;
 using Error_404;
 using Error_400;
 
-//! ExecuteScalarAsync überprüfen
-//! Error Code 409 Überprüfen  
-
-//! Register DB logic refabric
-//! Login DB logic refabric
-
-//! Logout may need a confirmation and a response when user is already logged out 
-
-//! Display Media needs to display the comments/ratings
-
-//! User shall remove his like
 
 class Program
 {
@@ -88,8 +77,7 @@ public static class Router
         new Route("POST", @"^/api/users/logout$", (ctx, p) => LogoutEndpoint.LogoutUser(ctx, p)),
 
         // Profile and Leaderboard
-        new Route("GET",  @"^/api/(?<username>[A-Za-z0-9_]+)/profile$", (ctx, p) => ProfileEndpoint.ProfileSite(ctx, p)),
-        new Route("PUT",  @"^/api/(?<username>[A-Za-z0-9_]+)/profile$", (ctx, p) => ProfileEndpoint.ProfileSite(ctx, p)),
+        new Route("GET",  @"^/api/(?<username>[A-Za-z0-9_-]+)/profile$", (ctx, p) => ProfileEndpoint.ProfileSite(ctx, p)),
         new Route("GET",  @"^/api/users/leaderboard$", (ctx, p) => LeaderboardEndpoint.LeaderboardSite(ctx, p)),
 
         // Media
@@ -102,20 +90,20 @@ public static class Router
         // Media rating
         new Route("POST", @"^/api/media/(?<mediaId>[0-9]+)/rate$", (ctx, p) => New_Rating.New_Rating_Site(ctx, p)), //new rating
         new Route("PUT", @"^/api/ratings/(?<mediaId>[0-9]+)$", (ctx, p) => Update_Rating.Update_Rating_Site(ctx, p)), //update rating
-        new Route("DELETE", @"^/api/ratings/(?<ratingId>[0-9]+)$", (ctx, p) => delete_rating.delete_rating_site(ctx, p)), //delete rating
-        new Route("POST", @"^/api/ratings/(?<ratingId>[0-9]+)/confirm$", (ctx, p) => Confirm_Comment.Confirm_Comment_Site(ctx, p)), //confirm comment
+        new Route("DELETE", @"^/api/ratings/(?<mediaId>[0-9]+)$", (ctx, p) => delete_rating.delete_rating_site(ctx, p)), //delete rating
+        new Route("POST", @"^/api/ratings/(?<mediaId>[0-9]+)/confirm$", (ctx, p) => Confirm_Comment.Confirm_Comment_Site(ctx, p)), //confirm comment
         new Route("POST", @"^/api/ratings/(?<ratingId>[0-9]+)/like$", (ctx, p) => Like_Rating_EP.Like_Rating_Site(ctx, p)), //like rating
 
         // Favorites
         new Route("POST", @"^/api/media/(?<mediaId>[0-9]+)/favorite$", (ctx, p) => Set_Favorite_Media.Set_Favorite_Site(ctx, p)), //set media to favorites
         new Route("DELETE", @"^/api/media/(?<mediaId>[0-9]+)/favorite$", (ctx, p) => Delete_Favorite_Media.Delete_Favorite_Site(ctx, p)), //remove media from favorites
-        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_]+)/favorite$", (ctx, p) => Fav_List.Fav_List_Site(ctx, p)), //display users fav list
+        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_-]+)/favorite$", (ctx, p) => Fav_List.Fav_List_Site(ctx, p)), //display users fav list
     
         // History
-        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_]+)/rate/history$", (ctx, p) => Rating_History.Rating_History_Site(ctx, p)), //rating history
+        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_-]+)/rate/history$", (ctx, p) => Rating_History.Rating_History_Site(ctx, p)), //rating history
         
         // Recommendations
-        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_]+)/recommendations$", (ctx, p) => Recommendations_EP.Recommendations_Site(ctx, p)), //recommendations
+        new Route("GET", @"^/api/users/(?<username>[A-Za-z0-9_-]+)/recommendations$", (ctx, p) => Recommendations_EP.Recommendations_Site(ctx, p)), //recommendations
     };
 
     public static async Task Handle(HttpListenerContext context)

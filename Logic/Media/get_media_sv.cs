@@ -29,13 +29,14 @@ public class All_Media_extract_service
             //#############################################################################
             string query = @"
                 SELECT 
-                    m.id, m.user_id, m.title, m.description, m.media_type, 
+                    m.id, m.user_id, u.username, m.title, m.description, m.media_type, 
                     m.release_year, m.age_restriction, 
                     COALESCE(AVG(r.stars), 0.0) as avg_score,
                     ARRAY_AGG(DISTINCT g.genre) FILTER (WHERE g.genre IS NOT NULL) as genres,
                     m.created_at  
 
                 FROM media_entries m
+                JOIN users u ON m.user_id = u.id
                 LEFT JOIN media_genres g ON m.id = g.media_id
                 LEFT JOIN ratings r ON m.id = r.media_id
 
@@ -43,21 +44,23 @@ public class All_Media_extract_service
                 AND (@type IS NULL OR m.media_type = @type)
                 AND (@year IS NULL OR m.release_year = @year)
                 AND (@age IS NULL OR m.age_restriction = @age)
+                AND (@filterUser IS NULL OR u.username ILIKE @filterUser)
                 AND (@genre IS NULL OR EXISTS (
                         SELECT 1 FROM media_genres g2 
                         WHERE g2.media_id = m.id AND g2.genre ILIKE @genre))
 
-                GROUP BY m.id, m.user_id, m.title, m.description, m.media_type, m.release_year, m.age_restriction, m.created_at
+                GROUP BY m.id, m.user_id,u.username, m.title, m.description, m.media_type, m.release_year, m.age_restriction, m.created_at
                 HAVING (@rating IS NULL OR AVG(r.stars) >= @rating)
             ";
 
             //##########################//
-            // Sorting
-            // Default: by id ascending
+            // Sorting                  //
+            // Default: by id ascending //
             //##########################//
             query += filter.SortBy switch
             {
                 "title" => " ORDER BY m.title ASC",
+                "username" => " ORDER BY u.username ASC",
                 "rating_best" => " ORDER BY avg_score DESC",
                 "rating_worst" => " ORDER BY avg_score ASC",
                 "year_newest" => " ORDER BY m.release_year DESC",
@@ -81,6 +84,7 @@ public class All_Media_extract_service
             extractCMD.Parameters.Add(new NpgsqlParameter("year", NpgsqlTypes.NpgsqlDbType.Integer) { Value = filter.ReleaseYear ?? (object)DBNull.Value });
             extractCMD.Parameters.Add(new NpgsqlParameter("age", NpgsqlTypes.NpgsqlDbType.Text) { Value = string.IsNullOrWhiteSpace(filter.AgeRestriction) ? DBNull.Value : filter.AgeRestriction });
             extractCMD.Parameters.Add(new NpgsqlParameter("rating", NpgsqlTypes.NpgsqlDbType.Numeric) { Value = filter.MinRating ?? (object)DBNull.Value });
+            extractCMD.Parameters.Add(new NpgsqlParameter("filterUser", NpgsqlTypes.NpgsqlDbType.Text) { Value = string.IsNullOrWhiteSpace(filter.Username) ? DBNull.Value : $"%{filter.Username}%" });
 
             using var reader = await extractCMD.ExecuteReaderAsync();
 
@@ -91,14 +95,15 @@ public class All_Media_extract_service
                 {
                     id = reader.GetInt32(0),
                     userid = reader.GetInt32(1),
-                    title = reader.GetString(2),
-                    description = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                    type = reader.GetString(4),
-                    year = reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
-                    agerating = reader.GetString(6),
-                    score = (double)reader.GetDecimal(7),
-                    genres = reader.IsDBNull(8) ? new List<string>() : reader.GetFieldValue<string[]>(8).ToList(),
-                    created = reader.GetDateTime(9)
+                    username = reader.GetString(2),
+                    title = reader.GetString(3),
+                    description = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                    type = reader.GetString(5),
+                    year = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                    agerating = reader.GetString(7),
+                    score = (double)reader.GetDecimal(8),
+                    genres = reader.IsDBNull(9) ? new List<string>() : reader.GetFieldValue<string[]>(9).ToList(),
+                    created = reader.GetDateTime(10)
                 });
             }
 
