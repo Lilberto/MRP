@@ -26,7 +26,7 @@ public class New_Rating
         try
         {
             string? Token = await Tokens.TokenValidate(request, response);
-            int userId = UserID.User_ID.UserID_DB(Token!);
+            int userId = await UserID.User_ID.UserID_DB(Token!);
 
             if (routeParams.TryGetValue("mediaId", out string? idStr) && int.TryParse(idStr, out int mediaId))
             {

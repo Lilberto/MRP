@@ -2,7 +2,7 @@ namespace Logout_Service;
 
 using Npgsql;
 
-// utils
+//* utils
 using DBConnection;
 
 

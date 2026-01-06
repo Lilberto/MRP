@@ -1,21 +1,22 @@
+namespace UserID;
+
 using Npgsql;
 
-namespace UserID;
+//* utils
+using DBConnection;
 
 public static class User_ID
 {
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=mrp_db;Username=admin;Password=mrp123;";
-
-    public static int UserID_DB(string token)
+    public static async Task <int> UserID_DB(string token)
     {
-        using var conn = new NpgsqlConnection(ConnectionString);
-        conn.Open();
+        using var conn = DbFactory.GetConnection();
+        await conn.OpenAsync();
 
-        string checkQuery = @"SELECT id FROM users WHERE token = @token"; //  AND token_created_at > NOW() - INTERVAL '168 hours'
+        string checkQuery = @"SELECT id FROM users WHERE token = @token AND token_created_at > NOW() - INTERVAL '168 hours';";
         using var checkCmd = new NpgsqlCommand(checkQuery, conn);
         checkCmd.Parameters.AddWithValue("@token", token);
 
-        var result = checkCmd.ExecuteScalar();
+        var result = await checkCmd.ExecuteScalarAsync();
         int Valid_UserID = (int)result!;
 
         return Valid_UserID;

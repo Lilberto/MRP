@@ -23,7 +23,7 @@ public class Media_Delete_Endpoint
         try
         {
             string? Token = await Tokens.TokenValidate(request, response);
-            int User_ID = UserID.User_ID.UserID_DB(Token!);
+            int User_ID = await UserID.User_ID.UserID_DB(Token!);
 
             if (routeParams.TryGetValue("id", out string? idStr) && int.TryParse(idStr, out int mediaId))
             {

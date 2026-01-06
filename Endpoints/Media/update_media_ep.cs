@@ -28,7 +28,7 @@ public class Media_update_Endpoint
         try
         {
             string? Token = await Tokens.TokenValidate(request, response);
-            int User_ID = UserID.User_ID.UserID_DB(Token!);
+            int User_ID = await UserID.User_ID.UserID_DB(Token!);
 
             var updateData = JsonSerializer.Deserialize<MediaUpdateDto>(await Body_request.Body_Request.Body_Data(request));
 
@@ -50,7 +50,7 @@ public class Media_update_Endpoint
                         return;
 
                     case 403:
-                        Error403.E_403(response);
+                        await Error403.E_403(response);
                         return;
                     
                     case 404:

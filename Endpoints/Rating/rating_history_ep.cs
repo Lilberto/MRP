@@ -20,7 +20,7 @@ public static class Rating_History
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-        int userId = UserID.User_ID.UserID_DB(Token!);
+        int userId = await UserID.User_ID.UserID_DB(Token!);
 
         if (routeParams.TryGetValue("username", out string? username) && !string.IsNullOrEmpty(username))
         {

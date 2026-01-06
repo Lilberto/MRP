@@ -24,7 +24,7 @@ public class Confirm_Comment
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-        int userId = UserID.User_ID.UserID_DB(Token!);
+        int userId = await UserID.User_ID.UserID_DB(Token!);
 
         try
         {

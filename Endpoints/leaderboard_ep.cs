@@ -19,7 +19,7 @@ public static class LeaderboardEndpoint
         var response = context.Response;
 
         string? Token = await Tokens.TokenValidate(request, response);
-        int userId = UserID.User_ID.UserID_DB(Token!);
+        int userId = await UserID.User_ID.UserID_DB(Token!);
 
         var (statusCode, data) = await Leaderboard_Service.Leaderboard_Logic();
 

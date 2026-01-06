@@ -27,8 +27,6 @@ public class Single_Media_Endpoint
 
             if (routeParams.TryGetValue("id", out string? idValue) && int.TryParse(idValue, out int mediaId))
             {
-                Console.WriteLine($"MediaID out of URL: {mediaId}");
-
                 var (StatusCode, Message, Data, Rating) = await Single_Media_extract_service.Single_Media_extract(mediaId);
 
 
