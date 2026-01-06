@@ -20,7 +20,7 @@ namespace MRP.Tests
         {
             string salt = Hash.GenerateSalt();
             
-            Assert.Equal(16, salt.Length);
+            Assert.Equal(24, salt.Length);
         }
         
         // 2: Prüft, dass der generierte Salt nur hexadezimale Kleinbuchstaben und Zahlen enthält.
@@ -29,7 +29,7 @@ namespace MRP.Tests
         {
             string salt = Hash.GenerateSalt();
             
-            Assert.Matches("^[a-f0-9]{16}$", salt);
+            Assert.Matches("^[A-Za-z0-9+/]+={0,2}$", salt);
         }
         
         // 3: Prüft die statistische Eindeutigkeit von generierten Salts.
@@ -52,7 +52,7 @@ namespace MRP.Tests
         public void Hash_HashPassword_SameInputs_ProduceIdenticalHashes()
         {
             string password = "SecurePassword123";
-            string salt = "testsalt1234567890";
+            string salt = "dGVzdHNhbHQxMjM0NTY3ODkw";
             
             string hash1 = Hash.HashPassword(password, salt);
             string hash2 = Hash.HashPassword(password, salt);
@@ -64,7 +64,7 @@ namespace MRP.Tests
         [Fact]
         public void Hash_HashPassword_DifferentPasswords_ProduceDifferentHashes()
         {
-            string salt = "commonsalt12345678";
+            string salt = "Y29tbW9uc2FsdDEyMzQ1Njc4";
             string password1 = "Password123";
             string password2 = "Different456";
             
@@ -79,8 +79,8 @@ namespace MRP.Tests
         public void Hash_HashPassword_DifferentSalts_ProduceDifferentHashes()
         {
             string password = "SamePassword";
-            string salt1 = "firstsalt12345678";
-            string salt2 = "secondsalt87654321";
+            string salt1 = "Zmlyc3RzYWx0MTIzNDU2Nzg=";
+            string salt2 = "c2Vjb25kc2FsdDg3NjU0MzIx";
             
             string hash1 = Hash.HashPassword(password, salt1);
             string hash2 = Hash.HashPassword(password, salt2);
@@ -93,7 +93,7 @@ namespace MRP.Tests
         public void Hash_HashPassword_ReturnsValidBase64String()
         {
             string password = "TestPassword";
-            string salt = "testsalt1234567890";
+            string salt = "dGVzdHNhbHQxMjM0NTY3ODkw";
             
             string hash = Hash.HashPassword(password, salt);
             
@@ -104,7 +104,7 @@ namespace MRP.Tests
         [Fact]
         public void Hash_HashPassword_IsCaseSensitive()
         {
-            string salt = "testsalt1234567890";
+            string salt = "dGVzdHNhbHQxMjM0NTY3ODkw";
             string lowerCase = "password";
             string upperCase = "PASSWORD";
             string mixedCase = "Password";
