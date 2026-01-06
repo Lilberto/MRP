@@ -1,5 +1,10 @@
 https://github.com/Lilberto/MRP
 
+Start:
+- dotnet run
+- docker DB Start
+- Send requests
+
 Unit Tests:
 - dotnet test Tests/
 

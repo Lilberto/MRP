@@ -52,6 +52,7 @@ public static class RegisterService
             //###################################//
             string salt = Hash.GenerateSalt();
             string passwordHash = Hash.HashPassword(User_data.Password, salt);
+            Console.WriteLine($"salt: {salt}\npasswordhash: {passwordHash}");
 
             //################################//
             // Insert user with ALL required  //

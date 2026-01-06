@@ -1,19 +1,27 @@
+using System.Security.Cryptography;
+
 namespace Hash_util;
 
 public static class Hash
 {
     public static string GenerateSalt()
     {
-        return Guid.NewGuid().ToString().Replace("-", "").Substring(0, 16);
+        byte[] salt = new byte[16];
+        RandomNumberGenerator.Fill(salt);
+        return Convert.ToBase64String(salt);
     }
     
     public static string HashPassword(string password, string salt)
     {
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var saltedPassword = password + salt;
-        var bytes = System.Text.Encoding.UTF8.GetBytes(saltedPassword);
-        var hash = sha256.ComputeHash(bytes);
+        byte[] saltBytes = Convert.FromBase64String(salt);
+
+        using var pbkdf2 = new Rfc2898DeriveBytes(
+            password: password,
+            salt: saltBytes,
+            iterations: 100_000,
+            hashAlgorithm: HashAlgorithmName.SHA256);
         
+        byte[] hash = pbkdf2.GetBytes(32); // 32 Bytes = 256 Bit
         return Convert.ToBase64String(hash);
     }
 }
